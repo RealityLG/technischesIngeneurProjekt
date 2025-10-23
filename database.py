@@ -1,15 +1,23 @@
 import sqlite3
 from typing import Optional, List, Dict
+# Projektlogik, Methodenplanung und GUI-/Datenbankstruktur stammen vollständig vom Autor; 
+# GitHub Copilot / ChatGPT wurde nur teils für Python-Syntax und Bibliotheksdetails genutzt.
 
+"""
+database.py
+Datenbankfunktionen für Parkplatzverwaltungssystem
+@author: Vincent Gentz
+Matrikelnummer:
+Datum: 22.10.2025"""
 DB_PATH = 'database.db'
-
-def init_db(path: str = DB_PATH):
-    """Erstellt die Tabelle 'personen', falls sie noch nicht existiert."""
+# Initialisierung der Datenbank und Tabelle 'Personen' falls nicht vorhanden
+def initialise_db(path: str = DB_PATH):
     with sqlite3.connect(path) as conn:
         cur = conn.cursor()
+        # Tabelle wird mit SQL erstellt
         cur.execute('''
-                CREATE TABLE IF NOT EXISTS personen (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+            CREATE TABLE IF NOT EXISTS personen (
+                uid TEXT PRIMARY KEY,
                 vorname TEXT NOT NULL,
                 nachname TEXT NOT NULL,
                 parkplatznummer TEXT NOT NULL,
@@ -17,79 +25,118 @@ def init_db(path: str = DB_PATH):
                 eingecheckt INTEGER DEFAULT 0
             )
         ''')
-        print("Datenbank und Tabelle wurden erstellt, falls sie noch nicht existieren.")
+        conn.commit()
+        print("Datenbank initialisiert.")
+ # Datenbank wird initialisiert, erstellt Tabelle falls nicht vorhanden
+initialise_db()
 
-init_db()
+"""add_person(...) fügt neue Person der Datenbank hinzu
+ uid: Chip UID für Individuum
+ Vor-/Nachname: Name der Person
+ parkplatznummer: Zugewiesene Parkplatznummer"""
 
-def add_person(vorname: str, nachname: str, parkplatznummer: str, path: Optional[str] = None) -> int:
-    """Fügt eine neue Person zur Datenbank hinzu und gibt ID zurück."""
+def add_person(uid: str, vorname: str, nachname: str, parkplatznummer: str, path: Optional[str] = None) -> str:
+    # Datenbank wird als Variable geöffnet
     with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
+        cur = conn.cursor() # für SQL Befehle
         try:
-            cur.execute('INSERT INTO personen (vorname, nachname, parkplatznummer) VALUES (?, ?, ?)', (vorname, nachname, parkplatznummer))
-            return cur.lastrowid
+            # Einfügen der Person
+            cur.execute('INSERT INTO personen (uid, vorname, nachname, parkplatznummer) VALUES (?, ?, ?, ?)', 
+                       (uid, vorname, nachname, parkplatznummer))
+            print(f"Person {vorname} {nachname} mit UID {uid} wurde hinzugefügt.")
+            return uid
         except sqlite3.Error as e:
             print(f"Fehler beim Hinzufügen der Person: {e}")
-            return 0
+            return ""
 
-def delete_person(vorname: str, nachname: str, parkplatznummer: str, path: Optional[str] = None) -> int:
-    """Löscht eine Person aus der Datenbank und gibt die Anzahl der gelöschten Zeilen zurück."""
+"""delete_person(...) löscht eine Person aus der Datenbank anhand der UID
+   uid: Chip UID der zu löschenden Person"""
+
+def delete_person(uid: str, path: Optional[str] = None) -> int:
+    # Datenbank wird als Variable geöffnet
     with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
+        cur = conn.cursor() # für SQL Befehle
         try:
-            cur.execute('DELETE FROM personen WHERE vorname = ? AND nachname = ? AND parkplatznummer = ?', (vorname, nachname, parkplatznummer))
+            # Löschen der Person
+            cur.execute('DELETE FROM personen WHERE uid = ?', (uid,))
+            print(f"Person mit UID {uid} wurde gelöscht.")
             return cur.rowcount
         except sqlite3.Error as e:
             print(f"Fehler beim Löschen der Person: {e}")
             return 0
 
-def show_all_personen():
-    """Gibt alle Personen aus der Datenbank aus."""
-    with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM personen")
-        rows = cur.fetchall()
-        if rows:
-            print("ID | Vorname | Nachname | Parkplatznummer | Belegt | Eingecheckt")
-            print("-" * 70)
-            for row in rows:
-                print(row)
-        else:
-            print("Keine Personen in der Datenbank.")
+"""show_all_personen() gibt alle Personen in der Datenbank zurück."""
 
-def update_eingecheckt(vorname: str, nachname: str, eingecheckt: int, path: Optional[str] = None) -> int:
-    """Aktualisiert das eingecheckt-Feld für eine Person und gibt die Anzahl der aktualisierten Zeilen zurück."""
+def show_all_personen() -> List[Dict]:
+    # Datenbank wird als Variable geöffnet
     with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
+        cur = conn.cursor() # für SQL Befehle
+        cur.execute('SELECT uid, vorname, nachname, parkplatznummer, belegt, eingecheckt FROM personen') # Alle Personen abfragen
+        rows = cur.fetchall()
+        # Ergebnis in Liste von Dictionaries umwandeln
+        return [
+            {
+                'uid': row[0],
+                'vorname': row[1],
+                'nachname': row[2],
+                'parkplatznummer': row[3],
+                'belegt': row[4],
+                'eingecheckt': row[5]
+            }
+            for row in rows
+        ]
+
+"""update_eingecheckt(...) ändert eingecheckt-Status einer Person anhand der UID"""
+
+def update_eingecheckt(uid: str, path: Optional[str] = None) -> int:
+    # Datenbank wird als Variable geöffnet
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor() # für SQL Befehle
         try:
-            cur.execute('UPDATE personen SET eingecheckt = ? WHERE vorname = ? AND nachname = ?', (eingecheckt, vorname, nachname))
+            # Aktuellen Status abfragen
+            cur.execute('SELECT eingecheckt FROM personen WHERE uid = ?', (uid,))
+            result = cur.fetchone()
+            
+            if result is None:
+                print(f"UID {uid} nicht in Datenbank gefunden.")
+                return 0
+            
+            # Status umkehren (0 -> 1 oder 1 -> 0)
+            neuer_status = 1 if result[0] == 0 else 0
+            
+            # Status aktualisieren
+            cur.execute('UPDATE personen SET eingecheckt = ? WHERE uid = ?', (neuer_status, uid))
+            print(f"UID {uid}: eingecheckt wurde von {result[0]} auf {neuer_status} geändert.")
             return cur.rowcount
+            
         except sqlite3.Error as e:
             print(f"Fehler beim Aktualisieren von eingecheckt: {e}")
             return 0
 
-def update_belegt(vorname: str, nachname: str, belegt: int, path: Optional[str] = None) -> int:
-    """Aktualisiert das belegt-Feld für eine Person und gibt die Anzahl der aktualisierten Zeilen zurück."""
+"""update_belegt(...) aktualisiert das belegt-Feld für eine Person anhand der UID."""
+
+def update_belegt(uid: str, belegt: int, path: Optional[str] = None) -> int:
+    # Datenbank wird als Variable geöffnet
     with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
+        cur = conn.cursor() # für SQL Befehle
         try:
-            cur.execute('UPDATE personen SET belegt = ? WHERE vorname = ? AND nachname = ?', (belegt, vorname, nachname))
+            # belegt-Feld aktualisieren
+            cur.execute('UPDATE personen SET belegt = ? WHERE uid = ?', (belegt, uid))
+            print(f"UID {uid}: belegt wurde auf {belegt} gesetzt.")
             return cur.rowcount
         except sqlite3.Error as e:
             print(f"Fehler beim Aktualisieren von belegt: {e}")
             return 0
-        
-def check(parkplatznummer: str):
-    """Überprüft, ob ein Parkplatz belegt ist."""
+
+"""check(...) überprüft, ob ein Parkplatz belegt ist anhand der Parkplatznummer."""
+
+def check(parkplatznummer: str) -> bool:
+    # Datenbank wird als Variable geöffnet
     with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        try:
-            cur.execute('SELECT belegt FROM personen WHERE parkplatznummer = ?', (parkplatznummer,))
-            if cur.rowcount == 0:
-                print("Parkplatznummer nicht gefunden.")
-                return None
-            result = cur.fetchone()
-            return result[0] == 1  # Gibt True zurück, wenn belegt, sonst False
-        except sqlite3.Error as e:
-            print(f"Fehler beim Überprüfen des Parkplatzes: {e}")
-            return None
+        cur = conn.cursor() # für SQL Befehle
+        cur.execute('SELECT belegt FROM personen WHERE parkplatznummer = ?', (parkplatznummer,)) # Belegt-Status abfragen
+        result = cur.fetchone()
+        # Ergebnis zurückgeben
+        if result:
+            return result[0] == 1
+        return False
