@@ -25,7 +25,7 @@ bool cooldownActive = false;
 bool position = false; //für Anzeige
 /*
 Skript.ino
-Datenbankfunktionen für Parkplatzverwaltungssystem
+Arduino Skript für Sensoren und LED-Steuerung
 @author: Vincent Gentz
 Matrikelnummer:
 Datum: 22.10.2025"""
