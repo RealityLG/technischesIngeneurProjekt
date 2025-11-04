@@ -53,6 +53,7 @@ void setup() {
 
 }
 
+unsigned long lastPrint = 0;
 void loop() {
   // Ultraschall-Messung
   long distance = measureDistance();
@@ -62,12 +63,11 @@ void loop() {
   if (cooldownActive) {
 
     //millis() verstrichene Zeit seit Start von Controller
-    //elapsed = wie viel Zeit seit Cooldownstart vergangen ist
-    unsigned long elapsed = millis() - cooldownStart;
+    //timePassed = wie viel Zeit seit Cooldownstart vergangen ist
+    unsigned long timePassed = millis() - cooldownStart;
     //übrige Zeit
-    unsigned long remaining = cooldownTime - elapsed;
+    unsigned long remaining = cooldownTime - timePassed;
 
-    static unsigned long lastPrint = 0;
     if (millis() - lastPrint >= 1000) {
       lastPrint = millis();
       Serial.print(F("Cooldown aktiv: "));
@@ -75,7 +75,7 @@ void loop() {
       Serial.println(F(" Sekunden verbleibend"));
     }
 
-    if (elapsed >= cooldownTime) {
+    if (timePassed >= cooldownTime) {
       cooldownActive = false;
       Serial.println(F("Cooldown vorbei - neue Karten können gescannt werden."));
     }
@@ -83,12 +83,21 @@ void loop() {
 
   } else {
 
+    // Überprüfung ob Karte vorhanden ist
     if (!mfrc522.PICC_IsNewCardPresent()) return;
     if (!mfrc522.PICC_ReadCardSerial()) return;
 
     String uid = "";
+    //Stuct mfrc522.uid gegeben
+    /*
+        size
+        uidByte[]
+        sak (Kartentyp)
+    */
     for (byte i = 0; i < mfrc522.uid.size; i++) {
+
       if (mfrc522.uid.uidByte[i] < 0x10) uid += "0";
+      //wandelt uidByte in Hex um, HEX bestimmt Format
       uid += String(mfrc522.uid.uidByte[i], HEX);
     }
     uid.toUpperCase();
@@ -108,6 +117,8 @@ void loop() {
 
     cooldownStart = millis();
     cooldownActive = true;
+    //für Cooldown Ausgabe pro Sekunde
+    lastPrint = 0;
 
     mfrc522.PICC_HaltA();
     mfrc522.PCD_StopCrypto1();
