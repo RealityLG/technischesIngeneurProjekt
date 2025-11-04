@@ -11,7 +11,7 @@ Skript hört die Schnittestelle zum Arduino ab und aktualisiert die Datenbank.
 Matrikelnummer:
 Datum: 22.10.2025"""
 # Konfiguration
-PORT = 'COM3'
+PORT = '/dev/ttyACM0'
 BAUD = 9600
 
 """listen() wartet auf UID-Nachrichten vom Arduino und aktualisiert die Datenbank."""

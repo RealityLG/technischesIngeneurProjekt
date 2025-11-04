@@ -109,7 +109,7 @@ class ParkGUI(tk.Tk):
         dlg = tk.Toplevel(self)
         dlg.title("Person hinzufügen")
         dlg.geometry("350x220")
-        self.center_window(dlg)
+        #self.center_window(dlg)
         
         # Eingabefeld für UID, Vorname, Nachname, Parkplatznummer
         ttk.Label(dlg, text="UID:").grid(row=0, column=0, padx=10, pady=5, sticky='w')

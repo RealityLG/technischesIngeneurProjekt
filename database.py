@@ -140,3 +140,5 @@ def check(parkplatznummer: str) -> bool:
         if result:
             return result[0] == 1
         return False
+
+
