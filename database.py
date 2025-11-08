@@ -106,7 +106,6 @@ def update_eingecheckt(uid: str, path: Optional[str] = None) -> int:
             
             # Status aktualisieren
             cur.execute('UPDATE personen SET eingecheckt = ? WHERE uid = ?', (neuer_status, uid))
-            print(f"UID {uid}: eingecheckt wurde von {result[0]} auf {neuer_status} geändert.")
             return cur.rowcount
             
         except sqlite3.Error as e:

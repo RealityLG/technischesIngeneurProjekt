@@ -39,17 +39,9 @@ def listen():
                             uid_start = line.find("UID:") + 4
                             uid = line[uid_start:].strip().upper()
 
-                            print(f"→ UID erkannt: {uid}")
-                            print(f"→ Suche Person in Datenbank...")
-                            
                             # Datenbank aktualisieren
                             result = update_eingecheckt(uid)
                             
-                            if result > 0:
-                                print(f"Eingecheckt-Status für UID {uid} erfolgreich geändert")
-                            else:
-                                print(f"FEHLER: UID {uid} nicht in Datenbank gefunden!")
-                                print(f"Bitte Person mit UID {uid} in GUI hinzufügen")
                 
                 time.sleep(0.1)  # Kleine Pause zur CPU-Entlastung
                 

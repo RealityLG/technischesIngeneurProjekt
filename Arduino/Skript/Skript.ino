@@ -1,7 +1,14 @@
+//Vincent
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Adafruit_NeoPixel.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <RTClib.h>
+DateTime checkInTime; // <--- Diese Zeile hinzufügen!
 
+
+//Vincent
 // RFID
 #define SS_PIN 10
 #define RST_PIN 9
@@ -19,10 +26,18 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
+//serhat
+RTC_DS1307 rtc;
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+
+//vincent
 unsigned long cooldownStart = 0;
 const unsigned long cooldownTime = 15000; // 15 Sekunden
 bool cooldownActive = false;
-bool position = false; //für Anzeige
+
+bool position = false; //false = frei, true = belegt
+DateTime parkStartTime; 
 /*
 Skript.ino
 Arduino Skript für Sensoren und LED-Steuerung
@@ -48,9 +63,25 @@ void setup() {
   strip.show(); // Alle LEDs aus
   //strip.setBrightness(30);
 
-  Serial.println(F("RFID + Ultraschall + LED System gestartet"));
-  Serial.println(F("Karte auflegen zum Einchecken"));
 
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+
+  if(!rtc.begin()) {
+    Serial.println("RTC nicht gefunden!");
+    while(1);
+  }
+  if(!rtc.isrunning()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  
+  //Vincent
+  Serial.println(F("RFID + Ultraschall + LED + RTC System gestartet"));
+  Serial.println(F("Karte auflegen zum Einchecken"));
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Parksystem");
 }
 
 unsigned long lastPrint = 0;
@@ -105,15 +136,13 @@ void loop() {
     Serial.print(F("Karte erkannt! UID: "));
     
     //Posiion aktualisieren
-    if(!position) {
-      position = true;
-      //Serial.println("True");
-    } else {
-      position = false;
-      //Serial.println("False");
-    }
-
+    //Serhat
+    position = !position;
+  
+    display(position);
+    //Vincent
     Serial.println(uid);
+    
 
     cooldownStart = millis();
     cooldownActive = true;
@@ -123,5 +152,6 @@ void loop() {
     mfrc522.PICC_HaltA();
     mfrc522.PCD_StopCrypto1();
   }
-}
 
+  leddim();
+}
