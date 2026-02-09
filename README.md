@@ -21,4 +21,3 @@ The lights are visible from the side mirrors when reversing, making the system u
 
 
 
-Wenn du willst, kann ich auch noch **eine kompakte, professionelle Version für die GitHub README** schreiben, die direkt wie ein Projekt-Beschreibungstext aussieht, inklusive ein paar Bullet Points für Features. Willst du, dass ich das mache?
