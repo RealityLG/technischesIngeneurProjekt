@@ -7,8 +7,9 @@ from typing import Optional, List, Dict
 database.py
 Datenbankfunktionen für Parkplatzverwaltungssystem
 @author: Vincent Gentz
-Matrikelnummer:
+Matrikelnummer: 331843
 Datum: 22.10.2025"""
+
 DB_PATH = 'database.db'
 # Initialisierung der Datenbank und Tabelle 'Personen' falls nicht vorhanden
 def initialise_db(path: str = DB_PATH):

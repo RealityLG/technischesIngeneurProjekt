@@ -7,7 +7,7 @@ import database
 """gui.py
 GUI für Parkplatzverwaltungssystem
 @author: Vincent Gentz
-Matrikelnummer:
+Matrikelnummer: 331843
 Datum: 22.10.2025"""
 
 # Datenbankpfad aus database.py importieren, falls nicht vorhanden, wird erstellt
